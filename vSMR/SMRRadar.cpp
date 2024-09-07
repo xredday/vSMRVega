@@ -41,9 +41,7 @@ bool mouseWithin(CRect rect) {
 
 // ReSharper disable CppMsExtAddressOfClassRValue
 
-CSMRRadar::CSMRRadar()
-{
-
+CSMRRadar::CSMRRadar() {
 	Logger::info("CSMRRadar::CSMRRadar()");
 
 	// Initializing randomizer
@@ -98,7 +96,7 @@ CSMRRadar::CSMRRadar()
 		ColorManager = new CColorManager();
 
 	standardCursor = true;	
-	ActiveAirport = "EGKK";
+	ActiveAirport = "UUEE";
 
 	// Setting up the data for the 2 approach windows
 	appWindowDisplays[1] = false;
@@ -1474,12 +1472,6 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 			gstat = fp.GetGroundState();
 	}
 
-	// ----- UK Controller Plugin / Assigned Stand -------
-	string uk_stand;
-	uk_stand = fp.GetControllerAssignedData().GetFlightStripAnnotation(3);
-	if (uk_stand.length() == 0)
-		uk_stand = "NoGate";
-
 	// ----- Generating the replacing map -----
 	map<string, string> TagReplacingMap;
 
@@ -1537,7 +1529,6 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	TagReplacingMap["origin"] = origin;
 	TagReplacingMap["dest"] = dest;
 	TagReplacingMap["groundstatus"] = gstat;
-	TagReplacingMap["uk_stand"] = uk_stand;
 
 	return TagReplacingMap;
 }
@@ -2120,7 +2111,6 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 		TagClickableMap[TagReplacingMap["dest"]] = TAG_CITEM_FPBOX;
 		TagClickableMap[TagReplacingMap["systemid"]] = TAG_CITEM_NO;
 		TagClickableMap[TagReplacingMap["groundstatus"]] = TAG_CITEM_GROUNDSTATUS;
-		TagClickableMap[TagReplacingMap["uk_stand"]] = TAG_CITEM_UKSTAND;
 
 		//
 		// ----- Now the hard part, drawing (using gdi+) -------
