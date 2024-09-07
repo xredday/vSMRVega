@@ -20,7 +20,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -28,7 +28,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
@@ -130,8 +130,6 @@
   <ItemGroup>
     <ClCompile Include="CallsignLookup.cpp" />
     <ClCompile Include="Config.cpp" />
-    <ClCompile Include="CPDLCSettingsDialog.cpp" />
-    <ClCompile Include="DataLinkDialog.cpp" />
     <ClCompile Include="HttpHelper.cpp" />
     <ClCompile Include="InsetWindow.cpp" />
     <ClCompile Include="Rimcas.cpp" />
@@ -144,12 +142,11 @@
     <ClCompile Include="vSMR.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\lib\include\EuroScopePlugIn.h" />
     <ClInclude Include="CallsignLookup.hpp" />
     <ClInclude Include="ColorManager.h" />
     <ClInclude Include="Config.hpp" />
     <ClInclude Include="Constant.hpp" />
-    <ClInclude Include="CPDLCSettingsDialog.hpp" />
-    <ClInclude Include="DataLinkDialog.hpp" />
     <ClInclude Include="HttpHelper.hpp" />
     <ClInclude Include="InsetWindow.h" />
     <ClInclude Include="Logger.h" />

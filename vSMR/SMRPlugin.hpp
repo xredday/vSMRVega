@@ -1,8 +1,6 @@
 #pragma once
 #include "EuroScopePlugIn.h"
 #include "HttpHelper.hpp"
-#include "CPDLCSettingsDialog.hpp"
-#include "DataLinkDialog.hpp"
 #include <string>
 #include <algorithm>
 #include "Constant.hpp"
