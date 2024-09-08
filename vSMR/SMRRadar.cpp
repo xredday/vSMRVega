@@ -181,6 +181,18 @@ void CSMRRadar::LoadCustomFont() {
 	customFonts[3] = new Gdiplus::Font(buffer.c_str(), Gdiplus::REAL(FSizes["three"].GetInt()), fontStyle, Gdiplus::UnitPixel);
 	customFonts[4] = new Gdiplus::Font(buffer.c_str(), Gdiplus::REAL(FSizes["four"].GetInt()), fontStyle, Gdiplus::UnitPixel);
 	customFonts[5] = new Gdiplus::Font(buffer.c_str(), Gdiplus::REAL(FSizes["five"].GetInt()), fontStyle, Gdiplus::UnitPixel);
+
+	const int titleOffset = CurrentConfig->getActiveProfile()["font"]["title_offset"].GetInt();
+	customFonts[11] = new Gdiplus::Font(buffer.c_str(), Gdiplus::REAL(FSizes["one"].GetInt() + titleOffset),
+										Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
+	customFonts[12] = new Gdiplus::Font(buffer.c_str(), Gdiplus::REAL(FSizes["two"].GetInt() + titleOffset),
+										Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
+	customFonts[13] = new Gdiplus::Font(buffer.c_str(), Gdiplus::REAL(FSizes["three"].GetInt() + titleOffset),
+										Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
+	customFonts[14] = new Gdiplus::Font(buffer.c_str(), Gdiplus::REAL(FSizes["four"].GetInt() + titleOffset),
+										Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
+	customFonts[15] = new Gdiplus::Font(buffer.c_str(), Gdiplus::REAL(FSizes["five"].GetInt() + titleOffset),
+										Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
 }
 
 void CSMRRadar::LoadProfile(string profileName) {
@@ -2120,13 +2132,17 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 
 		int TagWidth = 0, TagHeight = 0;
 		RectF mesureRect;
-		graphics.MeasureString(L" ", wcslen(L" "), customFonts[currentFontSize], PointF(0, 0), &Gdiplus::StringFormat(), &mesureRect);
-		int blankWidth = (int)mesureRect.GetRight();
+		/*graphics.MeasureString(L" ", wcslen(L" "), customFonts[currentFontSize], PointF(0, 0), &Gdiplus::StringFormat(), &mesureRect);
+		int blankWidth = (int)mesureRect.GetRight();*/
+		int blankWidth = -2;
 
 		mesureRect = RectF(0, 0, 0, 0);
 		graphics.MeasureString(L"AZERTYUIOPQSDFGHJKLMWXCVBN", wcslen(L"AZERTYUIOPQSDFGHJKLMWXCVBN"),
 			customFonts[currentFontSize], PointF(0, 0), &Gdiplus::StringFormat(), &mesureRect);
 		int oneLineHeight = (int)mesureRect.GetBottom();
+		graphics.MeasureString(L"AZERTYUIOPQSDFGHJKLMWXCVBN", wcslen(L"AZERTYUIOPQSDFGHJKLMWXCVBN"),
+			customFonts[currentFontSize + 10], PointF(0, 0), &Gdiplus::StringFormat(), &mesureRect);
+		int firstLineHeight = (int)mesureRect.GetBottom();
 
 		const Value& LabelsSettings = CurrentConfig->getActiveProfile()["labels"];
 		const Value& LabelLines = LabelsSettings[Utils::getEnumString(TagType).c_str()]["definition"];
@@ -2137,12 +2153,15 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 
 		for (unsigned int i = 0; i < LabelLines.Size(); i++)
 		{
+			int b10 = TagHeight == 0 ? 10 : 0;
 
 			const Value& line = LabelLines[i];
 			vector<string> lineStringArray;
 
 			// Adds one line height
-			TagHeight += oneLineHeight;
+			if (TagHeight == 0) TagHeight = firstLineHeight;
+			else TagHeight += oneLineHeight;
+			//TagHeight += oneLineHeight;
 
 			int TempTagWidth = 0;
 
@@ -2158,7 +2177,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 
 				wstring wstr = wstring(element.begin(), element.end());
 				graphics.MeasureString(wstr.c_str(), wcslen(wstr.c_str()),
-					customFonts[currentFontSize], PointF(0, 0), &Gdiplus::StringFormat(), &mesureRect);
+					customFonts[currentFontSize + b10], PointF(0, 0), &Gdiplus::StringFormat(), &mesureRect);
 
 				TempTagWidth += (int) mesureRect.GetRight();
 
@@ -2205,12 +2224,13 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 		// Drawing the tag background
 
 		CRect TagBackgroundRect(TagCenter.x - (TagWidth / 2), TagCenter.y - (TagHeight / 2), TagCenter.x + (TagWidth / 2), TagCenter.y + (TagHeight / 2));
+		CRect TagBackgroundRectD(TagCenter.x - (TagWidth / 2), TagCenter.y - (TagHeight / 2) - 2, TagCenter.x + (TagWidth / 2), TagCenter.y + (TagHeight / 2) + 2);
 		SolidBrush TagBackgroundBrush(TagBackgroundColor);
-		graphics.FillRectangle(&TagBackgroundBrush, CopyRect(TagBackgroundRect));
+		graphics.FillRectangle(&TagBackgroundBrush, CopyRect(TagBackgroundRectD));
 		if (mouseWithin(TagBackgroundRect) || IsTagBeingDragged(rt.GetCallsign()))
 		{
 			Pen pw(ColorManager->get_corrected_color("label", Color::White));
-			graphics.DrawRectangle(&pw, CopyRect(TagBackgroundRect));
+			graphics.DrawRectangle(&pw, CopyRect(TagBackgroundRectD));
 		}
 
 		// Drawing the tag text
@@ -2235,7 +2255,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 			graphics.DrawLine(&Pen(ColorManager->get_corrected_color("symbol", Color::White)), PointF(Gdiplus::REAL(acPosPix.x), Gdiplus::REAL(acPosPix.y)), PointF(Gdiplus::REAL(toDraw1.x), Gdiplus::REAL(toDraw1.y)));
 
 		// If we use a RIMCAS label only, we display it, and adapt the rectangle
-		CRect oldCrectSave = TagBackgroundRect;
+		CRect oldCrectSave = TagBackgroundRectD;
 
 		if (rimcasLabelOnly) {
 			Color RimcasLabelColor = RimcasInstance->GetAircraftColor(rt.GetCallsign(), Color::AliceBlue, Color::AliceBlue,
@@ -2269,15 +2289,16 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 		}
 
 		// Adding the tag screen object
-		tagAreas[rt.GetCallsign()] = TagBackgroundRect;
-		AddScreenObject(DRAWING_TAG, rt.GetCallsign(), TagBackgroundRect, true, GetBottomLine(rt.GetCallsign()).c_str());
+		tagAreas[rt.GetCallsign()] = TagBackgroundRectD;
+		AddScreenObject(DRAWING_TAG, rt.GetCallsign(), TagBackgroundRectD, true, GetBottomLine(rt.GetCallsign()).c_str());
 
-		TagBackgroundRect = oldCrectSave;
+		TagBackgroundRectD = oldCrectSave;
 
 		// Clickable zones
 		int heightOffset = 0;
 		for (auto&& line : ReplacedLabelLines)
 		{
+			int bd10 = heightOffset == 0 ? 10 : 0;
 			int widthOffset = 0;
 			for (auto&& element : line)
 			{
@@ -2299,13 +2320,12 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 				RectF mRect(0, 0, 0, 0);
 
 				wstring welement = wstring(element.begin(), element.end());
-
-				graphics.DrawString(welement.c_str(), wcslen(welement.c_str()), customFonts[currentFontSize],
+				graphics.DrawString(welement.c_str(), wcslen(welement.c_str()), customFonts[currentFontSize + bd10],
 					PointF(Gdiplus::REAL(TagBackgroundRect.left + widthOffset), Gdiplus::REAL(TagBackgroundRect.top + heightOffset)),
 					&Gdiplus::StringFormat(), color);
 
 
-				graphics.MeasureString(welement.c_str(), wcslen(welement.c_str()), customFonts[currentFontSize],
+				graphics.MeasureString(welement.c_str(), wcslen(welement.c_str()), customFonts[currentFontSize + bd10],
 					PointF(0, 0), &Gdiplus::StringFormat(), &mRect);
 
 				CRect ItemRect(TagBackgroundRect.left + widthOffset, TagBackgroundRect.top + heightOffset,
@@ -2317,7 +2337,9 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 				widthOffset += blankWidth;
 			}
 
-			heightOffset += oneLineHeight;
+			if (heightOffset == 0) heightOffset = firstLineHeight;
+			else heightOffset += oneLineHeight;
+			//heightOffset += oneLineHeight;
 		}
 
 
