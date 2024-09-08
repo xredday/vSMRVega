@@ -1291,6 +1291,7 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	// sate: Gate, from speed or scratchpad that changes to speed if speed > 25kts *
 	// flightlevel: Flightlevel/Pressure altitude of the ac *
 	// gs: Ground speed of the ac *
+    // sgs: Ground speed of the ac that changes for squawk error *
 	// tendency: Climbing or descending symbol *
 	// wake: Wake turbulance cat *
 	// groundstatus: Current status *
@@ -1375,7 +1376,13 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 		sctype = sqerror;
 
 	// ----- Groundspeed -------
-	string speed = std::to_string(rt.GetPosition().GetReportedGS());
+	string rs = to_string(rt.GetPosition().GetReportedGS());
+    rs = string(3 - rs.length(), '0') + rs;
+	string speed = "V" + rs;
+
+	string sq_speed = speed;
+	if (has_squawk_error)
+		sq_speed = sqerror;
 
 	// ----- Departure runway -------
 	string deprwy = fp.GetFlightPlanData().GetDepartureRwy();
@@ -1536,6 +1543,7 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	TagReplacingMap["gate"] = gate;
 	TagReplacingMap["sate"] = sate;
 	TagReplacingMap["flightlevel"] = flightlevel;
+    TagReplacingMap["sgxs"] = sq_speed;
 	TagReplacingMap["gs"] = speed;
 	TagReplacingMap["tendency"] = tendency;
 	TagReplacingMap["wake"] = wake;
@@ -2118,6 +2126,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 		TagClickableMap[TagReplacingMap["gate"]] = TAG_CITEM_GATE;
 		TagClickableMap[TagReplacingMap["sate"]] = TAG_CITEM_GATE;
 		TagClickableMap[TagReplacingMap["flightlevel"]] = TAG_CITEM_NO;
+        TagClickableMap[TagReplacingMap["sgxs"]] = TAG_CITEM_NO;
 		TagClickableMap[TagReplacingMap["gs"]] = TAG_CITEM_NO;
 		TagClickableMap[TagReplacingMap["tendency"]] = TAG_CITEM_NO;
 		TagClickableMap[TagReplacingMap["wake"]] = TAG_CITEM_FPBOX;
