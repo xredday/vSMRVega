@@ -1438,10 +1438,10 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	int delta_fl = rt.GetPosition().GetFlightLevel() - rt.GetPreviousPosition(rt.GetPosition()).GetFlightLevel();
 	if (abs(delta_fl) >= 50) {
 		if (delta_fl < 0) {
-			tendency = "|";
+			tendency = "\\/";
 		}
 		else {
-			tendency = "^";
+			tendency = "/\\";
 		}
 	}
 
