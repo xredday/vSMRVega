@@ -2275,16 +2275,20 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 
 				// Drawing the rectangle
 
-				CRect RimcasLabelRect(TagBackgroundRect.left, TagBackgroundRect.top - rimcas_height, TagBackgroundRect.right, TagBackgroundRect.top);
+				CRect RimcasLabelRect(TagBackgroundRectD.left, TagBackgroundRectD.top - rimcas_height, TagBackgroundRectD.right, TagBackgroundRectD.top);
+				CRect RimcasLabelLeft(TagBackgroundRectD.left - 3, TagBackgroundRectD.top - rimcas_height, TagBackgroundRectD.left, TagBackgroundRectD.bottom);
+				CRect RimcasLabelRight(TagBackgroundRectD.right, TagBackgroundRectD.top - rimcas_height, TagBackgroundRectD.right + 3, TagBackgroundRectD.bottom);
 				graphics.FillRectangle(&SolidBrush(RimcasLabelColor), CopyRect(RimcasLabelRect));
-				TagBackgroundRect.top -= rimcas_height;
+				graphics.FillRectangle(&SolidBrush(RimcasLabelColor), CopyRect(RimcasLabelLeft));
+				graphics.FillRectangle(&SolidBrush(RimcasLabelColor), CopyRect(RimcasLabelRight));
+				TagBackgroundRectD.top -= rimcas_height;
 
 				// Drawing the text
 
-				wstring rimcasw = wstring(L"ALERT");
+				/*wstring rimcasw = wstring(L"ALERT");
 				StringFormat stformat = new StringFormat();
 				stformat.SetAlignment(StringAlignment::StringAlignmentCenter);
-				graphics.DrawString(rimcasw.c_str(), wcslen(rimcasw.c_str()), customFonts[currentFontSize], PointF(Gdiplus::REAL((TagBackgroundRect.left + TagBackgroundRect.right) / 2), Gdiplus::REAL(TagBackgroundRect.top)), &stformat, &RimcasTextColor);
+				graphics.DrawString(rimcasw.c_str(), wcslen(rimcasw.c_str()), customFonts[currentFontSize], PointF(Gdiplus::REAL((TagBackgroundRect.left + TagBackgroundRect.right) / 2), Gdiplus::REAL(TagBackgroundRect.top)), &stformat, &RimcasTextColor);*/
 			}
 		}
 
