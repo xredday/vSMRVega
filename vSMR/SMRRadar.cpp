@@ -1415,7 +1415,7 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	gate = gate.substr(0, 4);
 
 	if (gate.size() == 0 || gate == "0" || !isAcCorrelated)
-		gate = "NoGate";
+		gate = "STND";
 
 	// ----- Gate that changes to speed -------
 	string sate = gate;
