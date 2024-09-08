@@ -1362,8 +1362,12 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	string actype = "NoFPL";
 	if (fp.IsValid() && fp.GetFlightPlanData().IsReceived())
 		actype = fp.GetFlightPlanData().GetAircraftFPType();
-	if (actype.size() > 4 && actype != "NoFPL")
+	if (actype.size() > 4 && actype != "NoFPL") {
 		actype = actype.substr(0, 4);
+	}
+	if (actype != "NoFPL") {
+		actype += "/" + string{fp.GetFlightPlanData().GetAircraftWtc()};
+	}
 
 	// ----- Aircraft type that changes to squawk error -------
 	string sctype = actype;
