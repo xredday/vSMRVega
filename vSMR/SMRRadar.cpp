@@ -1996,8 +1996,15 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 
 		CPen qTrailPen(PS_SOLID, 1, ColorManager->get_corrected_color("symbol", Gdiplus::Color::White).ToCOLORREF());
 		CPen* pqOrigPen = dc.SelectObject(&qTrailPen);
+        Pen coordPen(ColorManager->get_corrected_color("symbol", Color::White), 2);
 
 		if (RtPos.GetTransponderC()) {
+            graphics.DrawPolygon(&coordPen, new Point[4]{
+                {acPosPix.x, acPosPix.y - 7},
+                {acPosPix.x - 7, acPosPix.y},
+                {acPosPix.x, acPosPix.y + 7},
+                {acPosPix.x + 7, acPosPix.y} 
+			}, 4);
 			/*
 			dc.MoveTo({ acPosPix.x, acPosPix.y - 6 });
 			dc.LineTo({ acPosPix.x - 6, acPosPix.y });
