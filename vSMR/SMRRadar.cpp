@@ -1998,13 +1998,18 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 		CPen* pqOrigPen = dc.SelectObject(&qTrailPen);
 
 		if (RtPos.GetTransponderC()) {
+			/*
 			dc.MoveTo({ acPosPix.x, acPosPix.y - 6 });
 			dc.LineTo({ acPosPix.x - 6, acPosPix.y });
 			dc.LineTo({ acPosPix.x, acPosPix.y + 6 });
 			dc.LineTo({ acPosPix.x + 6, acPosPix.y });
 			dc.LineTo({ acPosPix.x, acPosPix.y - 6 });
+			*/
 		}
 		else {
+            //graphics.DrawLine(&coordPen, acPosPix.x - 4, acPosPix.y - 4, acPosPix.x + 4, acPosPix.y + 4);
+            //graphics.DrawLine(&coordPen, acPosPix.x - 4, acPosPix.y + 4, acPosPix.x + 4, acPosPix.y - 4);
+			/*
 			dc.MoveTo(acPosPix.x, acPosPix.y);
 			dc.LineTo(acPosPix.x - 4, acPosPix.y - 4);
 			dc.MoveTo(acPosPix.x, acPosPix.y);
@@ -2013,6 +2018,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 			dc.LineTo(acPosPix.x - 4, acPosPix.y + 4);
 			dc.MoveTo(acPosPix.x, acPosPix.y);
 			dc.LineTo(acPosPix.x + 4, acPosPix.y + 4);
+			*/
 		}
 
 		// Predicted Track Line
