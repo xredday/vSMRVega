@@ -1510,30 +1510,13 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	TagReplacingMap["systemid"].append(tpss.substr(1, 6));
 
 	// Pro mode data here
-	if (isProMode)
-	{
-
-		if (isAirborne && !isAcCorrelated)
-		{
-			callsign = tssr;
-		}
-
-		if (!isAcCorrelated)
-		{
-			actype = "NoFPL";
-		}
-
-		// Is a primary target
-
-		if (isAirborne && !isAcCorrelated && IsPrimary)
-		{
+	if (isProMode) {
+		if (isAirborne && !isAcCorrelated) callsign = tssr;
+		if (!isAcCorrelated) actype = "NoFPL";
+		if (isAirborne && !isAcCorrelated && IsPrimary) { // Is a primary target
 			flightlevel = "NoALT";
 			tendency = "?";
 			speed = std::to_string(rt.GetGS());
-		}
-
-		if (isAirborne && !isAcCorrelated && IsPrimary)
-		{
 			callsign = TagReplacingMap["systemid"];
 		}
 	}
@@ -1586,24 +1569,20 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 }
 
-void CSMRRadar::OnRefresh(HDC hDC, int Phase)
-{
+void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 	Logger::info(string(__FUNCSIG__));
 	// Changing the mouse cursor
-	if (initCursor)
-	{
+	if (initCursor) {
 		if (customCursor) {
 			smrCursor = CopyCursor((HCURSOR)::LoadImage(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDC_SMRCURSOR), IMAGE_CURSOR, 0, 0, LR_SHARED));
 			// This got broken because of threading as far as I can tell
 			// The cursor does change for some milliseconds but gets reset almost instantly by external MFC code
 
-		}
-		else {
+		} else {
 			smrCursor = (HCURSOR)::LoadCursor(NULL, IDC_ARROW);
 		}
 
-		if (smrCursor != nullptr)
-		{		
+		if (smrCursor != nullptr) {		
 			pluginWindow = GetActiveWindow();
 			gSourceProc = (WNDPROC)SetWindowLong(pluginWindow, GWL_WNDPROC, (LONG)WindowProc);
 		}
@@ -1634,8 +1613,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 		return;
 	}
 
-	if (Phase != REFRESH_PHASE_BEFORE_TAGS)
-		return;
+	if (Phase != REFRESH_PHASE_BEFORE_TAGS) return;
 
 	Logger::info("Phase != REFRESH_PHASE_BEFORE_TAGS");
 
@@ -1664,8 +1642,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 		RefreshAirportActivity();
 	}
 
-	if (!QDMenabled && !QDMSelectEnabled)
-	{
+	if (!QDMenabled && !QDMSelectEnabled) {
 		POINT p;
 		if (GetCursorPos(&p)) {
 			if (ScreenToClient(GetActiveWindow(), &p)) {
@@ -1703,8 +1680,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 
 	RimcasInstance->RunwayAreas.clear();
 
-	if (QDMSelectEnabled || QDMenabled)
-	{
+	if (QDMSelectEnabled || QDMenabled) {
 		CRect R(GetRadarArea());
 		R.top += 20;
 		R.bottom = GetChatArea().top;
