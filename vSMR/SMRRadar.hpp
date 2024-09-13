@@ -146,7 +146,7 @@ public:
 
 	enum TagTypes { Departure, Arrival, Airborne, Uncorrelated };
 
-	string ActiveAirport = "EGKK";
+	string ActiveAirport = "UUEE";
 
 	inline string getActiveAirport() {
 		return ActiveAirport;
