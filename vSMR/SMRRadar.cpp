@@ -1841,7 +1841,8 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 		POINT acPos = ConvertCoordFromPositionToPixel(RtPos.GetPosition());
 		POINT acPosPix = acPos;
 
-		if (rt.GetGS() > 1) {
+		bool moving = rt.GetGS() > 1;
+		if (moving) {
 			POINT oldacPosPix;
 			CRadarTargetPositionData pAcPos = rt.GetPosition();
 
@@ -1916,7 +1917,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 			}
 		}
 
-
+		Pen coordPen(ColorManager->get_corrected_color("symbol", Color::White), 2);
 		if (CurrentConfig->getActiveProfile()["targets"]["show_primary_target"].GetBool()) {
 
 			SolidBrush H_Brush(ColorManager->get_corrected_color("afterglow",
@@ -1939,6 +1940,13 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 					} else {
 						len_m = iv["length"].GetDouble();
 						width_m = iv["span"].GetDouble();
+					}
+                    if (!RtPos.GetTransponderC() && ((moving && BLINK) || !moving)) { // If primary target
+						double rad = width_m * 0.33;
+						double radm = rt.GetPosition().GetPosition().DistanceTo(ConvertCoordFromPixelToPosition(POINT{long(acPos.x - rad), acPos.y})) * 1852;
+						double coef = rad / radm;
+						rad = rad * coef;
+						graphics.DrawEllipse(&coordPen, RectF(acPos.x - rad, acPos.y - rad, 2 * rad, 2 * rad));
 					}
 
 					GraphicsPath vegaPath;
@@ -1985,6 +1993,20 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 					lpPoints[i] = {REAL(ConvertCoordFromPositionToPixel(pos).x), REAL(ConvertCoordFromPositionToPixel(pos).y)};
 				}
 
+				if (!RtPos.GetTransponderC() && ((moving && BLINK) || !moving)) { // If primary target
+					double span = 36.0f;
+					if (rt.GetCorrelatedFlightPlan().IsValid() && rt.GetCorrelatedFlightPlan().GetFlightPlanData().IsReceived()) {
+						char wtc = rt.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftWtc();
+						if (wtc == 'L') span = 13.0f;
+						if (wtc == 'H') span = 61.0f;
+						if (wtc == 'J') span = 80.0f;
+					}
+					double rad = span * 0.33;
+					double radm = rt.GetPosition().GetPosition().DistanceTo(ConvertCoordFromPixelToPosition(POINT{long(acPosPix.x - rad), acPosPix.y})) * 1852;
+					double coef = rad / radm;
+					rad = rad * coef;
+					graphics.DrawEllipse(&coordPen, RectF(acPosPix.x - rad, acPosPix.y - rad, 2 * rad, 2 * rad));
+				}
 				graphics.FillPolygon(&H_Brush, lpPoints, Patatoides[rt.GetCallsign()].points.size());
 			}
 		}
