@@ -1840,7 +1840,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 		POINT acPos = ConvertCoordFromPositionToPixel(RtPos.GetPosition());
 		POINT acPosPix = acPos;
 
-		if (rt.GetGS() > 5) {
+		if (rt.GetGS() > 1) {
 			POINT oldacPosPix;
 			CRadarTargetPositionData pAcPos = rt.GetPosition();
 
