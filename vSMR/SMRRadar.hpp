@@ -11,6 +11,7 @@
 #include "Constant.hpp"
 #include "CallsignLookup.hpp"
 #include "Config.hpp"
+#include "VegaIcons.h"
 #include "Rimcas.hpp"
 #include "InsetWindow.h"
 #include <memory>
@@ -81,6 +82,7 @@ public:
 	char DllPathFile[_MAX_PATH];
 	string DllPath;
 	string ConfigPath;
+	string IconsPath;
 	CCallsignLookup * Callsigns = nullptr;
 	CColorManager * ColorManager;
 
@@ -117,6 +119,7 @@ public:
 
 	CRimcas * RimcasInstance = nullptr;
 	CConfig * CurrentConfig = nullptr;
+    VegaIcons *Icons = nullptr;
 
 	map<int, Gdiplus::Font *> customFonts;
 	int currentFontSize = 1;

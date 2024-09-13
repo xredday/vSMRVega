@@ -57,6 +57,7 @@ CSMRRadar::CSMRRadar() {
 	DllPath.resize(DllPath.size() - strlen("vSMR.dll"));
 	
 	ConfigPath = DllPath + "\\vSMR_Profiles.json";
+    IconsPath = DllPath + "\\vSMRVega_Icons.json";
 
 	Logger::info("Loading callsigns");
 
@@ -91,6 +92,10 @@ CSMRRadar::CSMRRadar() {
 	// Loading up the config file
 	if (CurrentConfig == nullptr)
 		CurrentConfig = new CConfig(ConfigPath);
+
+    // Loading the icons
+    if (Icons == nullptr)
+        Icons = new VegaIcons(IconsPath);
 
 	if (ColorManager == nullptr)
 		ColorManager = new CColorManager();
@@ -128,6 +133,7 @@ CSMRRadar::~CSMRRadar()
 	// Shutting down GDI+
 	GdiplusShutdown(m_gdiplusToken);
 	delete CurrentConfig;
+	delete Icons;
 }
 
 void CSMRRadar::CorrelateCursor() {
@@ -1262,11 +1268,11 @@ string CSMRRadar::GetBottomLine(const char * Callsign) {
 	return to_render;
 }
 
-bool CSMRRadar::OnCompileCommand(const char * sCommandLine)
-{
+bool CSMRRadar::OnCompileCommand(const char * sCommandLine) {
 	Logger::info(string(__FUNCSIG__));
 	if (strcmp(sCommandLine, ".smr reload") == 0) {
 		CurrentConfig = new CConfig(ConfigPath);
+        Icons = new VegaIcons(IconsPath);
 		LoadProfile(CurrentConfig->getActiveProfileName());
 		return true;
 	}
@@ -1855,7 +1861,8 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 
 		CRadarTargetPositionData RtPos = rt.GetPosition();
 
-		POINT acPosPix = ConvertCoordFromPositionToPixel(RtPos.GetPosition());
+		POINT acPos = ConvertCoordFromPositionToPixel(RtPos.GetPosition());
+		POINT acPosPix = acPos;
 
 		if (rt.GetGS() > 5) {
 			POINT oldacPosPix;
@@ -1938,17 +1945,71 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase)
 			SolidBrush H_Brush(ColorManager->get_corrected_color("afterglow",
 				CurrentConfig->getConfigColor(CurrentConfig->getActiveProfile()["targets"]["target_color"])));
 
-			PointF lpPoints[100];
-			for (unsigned int i = 0; i < Patatoides[rt.GetCallsign()].points.size(); i++)
-			{
-				CPosition pos;
-				pos.m_Latitude = Patatoides[rt.GetCallsign()].points[i].x;
-				pos.m_Longitude = Patatoides[rt.GetCallsign()].points[i].y;
+			bool vega_st = false;
+			if (rt.GetCorrelatedFlightPlan().IsValid() && rt.GetCorrelatedFlightPlan().GetFlightPlanData().IsReceived()) {
+				string type = rt.GetCorrelatedFlightPlan().GetFlightPlanData().GetAircraftFPType();
+				if (type.size() > 4) type = type.substr(0, 4);
+				if (Icons->hasIcon(type) && Icons->getIconPointSize(Icons->getIcon(type)["icon"].GetString()) != 0) {
+					bool isHeli = false;
+					double len_m = 1.0f;
+					double width_m = 1.0f;
 
-				lpPoints[i] = { REAL(ConvertCoordFromPositionToPixel(pos).x), REAL(ConvertCoordFromPositionToPixel(pos).y) };
+					auto &iv = Icons->getIcon(type);
+					string ico = iv["icon"].GetString();
+					if (iv.HasMember("hlength")) {
+						isHeli = true;
+						len_m = iv["hlength"].GetDouble();
+					} else {
+						len_m = iv["length"].GetDouble();
+						width_m = iv["span"].GetDouble();
+					}
+
+					GraphicsPath vegaPath;
+					vegaPath.AddPolygon(Icons->getIconPoints(ico), Icons->getIconPointSize(ico));
+					RectF bounds;
+					vegaPath.GetBounds(&bounds);
+					int len_px = bounds.Width;
+					int width_px = bounds.Height;
+
+					CPosition start = rt.GetPosition().GetPosition();
+
+					CPosition lenOffset = ConvertCoordFromPixelToPosition(POINT{acPos.x + len_px, acPos.y});
+					double len_m_px = start.DistanceTo(lenOffset) * 1852;
+					double lrscale = len_m / len_m_px;
+					double wrscale;
+					if (!isHeli) {
+						CPosition widthOffset = ConvertCoordFromPixelToPosition(POINT{acPos.x, acPos.y + width_px});
+						double width_m_px = start.DistanceTo(widthOffset) * 1852;
+						wrscale = width_m / width_m_px;
+					} else wrscale = lrscale;
+
+					RECT viewport = GetRadarArea();
+					double angle = ConvertCoordFromPixelToPosition({0, viewport.bottom}).DirectionTo(ConvertCoordFromPixelToPosition({0, viewport.bottom - 10}));
+					double ca = 360 - angle;
+					if (ca < 1 || ca > 359) ca = 0;
+					double heading = rt.GetPosition().GetReportedHeadingTrueNorth() + ca + CurrentConfig->getActiveProfile()["magvar"].GetDouble();
+					Matrix vegaMatrix;
+					vegaMatrix.Translate(acPos.x, acPos.y);
+					vegaMatrix.RotateAt(heading - 90, PointF(0, 0));
+					Status scs = vegaMatrix.Scale(lrscale, wrscale);
+					vegaPath.Transform(&vegaMatrix);
+					Status fst = graphics.FillPath(&H_Brush, &vegaPath);
+					if (scs != Status::Ok) GetPlugIn()->DisplayUserMessage("vSMR Vega", "vSMR Vega", string{"Scale error: " + to_string(scs)}.c_str(), true, true, false, false, false);
+					if (fst != Status::Ok) GetPlugIn()->DisplayUserMessage("vSMR Vega", "vSMR Vega", string{"Draw error: " + to_string(fst)}.c_str(), true, true, false, false, false);
+                    vega_st = true;
+				}
 			}
+			if (!vega_st) {
+				PointF lpPoints[100];
+				for (unsigned int i = 0; i < Patatoides[rt.GetCallsign()].points.size(); i++) {
+					CPosition pos;
+					pos.m_Latitude = Patatoides[rt.GetCallsign()].points[i].x;
+					pos.m_Longitude = Patatoides[rt.GetCallsign()].points[i].y;
+					lpPoints[i] = {REAL(ConvertCoordFromPositionToPixel(pos).x), REAL(ConvertCoordFromPositionToPixel(pos).y)};
+				}
 
-			graphics.FillPolygon(&H_Brush, lpPoints, Patatoides[rt.GetCallsign()].points.size());
+				graphics.FillPolygon(&H_Brush, lpPoints, Patatoides[rt.GetCallsign()].points.size());
+			}
 		}
 		acPosPix = ConvertCoordFromPositionToPixel(RtPos.GetPosition());
 
