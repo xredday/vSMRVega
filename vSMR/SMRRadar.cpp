@@ -1942,7 +1942,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 						width_m = iv["span"].GetDouble();
 					}
                     if (!RtPos.GetTransponderC() && ((moving && BLINK) || !moving)) { // If primary target
-						double rad = width_m * 0.33;
+						double rad = isHeli ? len_m * 0.33 : width_m * 0.33;
 						double radm = rt.GetPosition().GetPosition().DistanceTo(ConvertCoordFromPixelToPosition(POINT{long(acPos.x - rad), acPos.y})) * 1852;
 						double coef = rad / radm;
 						rad = rad * coef;
