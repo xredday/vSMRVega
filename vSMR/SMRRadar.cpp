@@ -1274,6 +1274,7 @@ bool CSMRRadar::OnCompileCommand(const char * sCommandLine) {
 		CurrentConfig = new CConfig(ConfigPath);
         Icons = new VegaIcons(IconsPath);
 		LoadProfile(CurrentConfig->getActiveProfileName());
+        GetPlugIn()->DisplayUserMessage("vSMR Vega", "vSMR Vega", "Reloaded configuration", true, true, false, false, false);
 		return true;
 	}
 
