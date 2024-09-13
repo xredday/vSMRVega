@@ -1372,7 +1372,7 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	if (actype.size() > 4 && actype != "NoFPL") {
 		actype = actype.substr(0, 4);
 	}
-	if (actype != "NoFPL") {
+	if (actype != "NoFPL" && fp.IsValid() && fp.GetFlightPlanData().IsReceived()) {
 		actype += "/" + string{fp.GetFlightPlanData().GetAircraftWtc()};
 	}
 
