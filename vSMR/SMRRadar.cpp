@@ -1104,7 +1104,7 @@ void CSMRRadar::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
 	CFlightPlan fp = GetPlugIn()->FlightPlanSelect(RadarTarget.GetCallsign());
 
 	// All units in M
-	float width = 34.0f;
+	float width = 36.0f;
 	float cabin_width = 4.0f;
 	float lenght = 38.0f;
 
