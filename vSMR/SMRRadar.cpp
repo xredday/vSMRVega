@@ -1988,8 +1988,8 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 				graphics.FillPolygon(&H_Brush, lpPoints, Patatoides[rt.GetCallsign()].points.size());
 			}
 		}
-		acPosPix = ConvertCoordFromPositionToPixel(RtPos.GetPosition());
 
+		acPosPix = ConvertCoordFromPositionToPixel(RtPos.GetPosition());
 		bool AcisCorrelated = IsCorrelated(GetPlugIn()->FlightPlanSelect(rt.GetCallsign()), rt);
 
 		if (!AcisCorrelated && reportedGs < 1 && !ReleaseInProgress && !AcquireInProgress)
@@ -1997,37 +1997,6 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 
 		CPen qTrailPen(PS_SOLID, 1, ColorManager->get_corrected_color("symbol", Gdiplus::Color::White).ToCOLORREF());
 		CPen* pqOrigPen = dc.SelectObject(&qTrailPen);
-        Pen coordPen(ColorManager->get_corrected_color("symbol", Color::White), 2);
-
-		if (RtPos.GetTransponderC()) {
-            graphics.DrawPolygon(&coordPen, new Point[4]{
-                {acPosPix.x, acPosPix.y - 7},
-                {acPosPix.x - 7, acPosPix.y},
-                {acPosPix.x, acPosPix.y + 7},
-                {acPosPix.x + 7, acPosPix.y} 
-			}, 4);
-			/*
-			dc.MoveTo({ acPosPix.x, acPosPix.y - 6 });
-			dc.LineTo({ acPosPix.x - 6, acPosPix.y });
-			dc.LineTo({ acPosPix.x, acPosPix.y + 6 });
-			dc.LineTo({ acPosPix.x + 6, acPosPix.y });
-			dc.LineTo({ acPosPix.x, acPosPix.y - 6 });
-			*/
-		}
-		else {
-            //graphics.DrawLine(&coordPen, acPosPix.x - 4, acPosPix.y - 4, acPosPix.x + 4, acPosPix.y + 4);
-            //graphics.DrawLine(&coordPen, acPosPix.x - 4, acPosPix.y + 4, acPosPix.x + 4, acPosPix.y - 4);
-			/*
-			dc.MoveTo(acPosPix.x, acPosPix.y);
-			dc.LineTo(acPosPix.x - 4, acPosPix.y - 4);
-			dc.MoveTo(acPosPix.x, acPosPix.y);
-			dc.LineTo(acPosPix.x + 4, acPosPix.y - 4);
-			dc.MoveTo(acPosPix.x, acPosPix.y);
-			dc.LineTo(acPosPix.x - 4, acPosPix.y + 4);
-			dc.MoveTo(acPosPix.x, acPosPix.y);
-			dc.LineTo(acPosPix.x + 4, acPosPix.y + 4);
-			*/
-		}
 
 		// Predicted Track Line
 		// It starts 20 seconds away from the ac
