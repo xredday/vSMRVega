@@ -151,6 +151,8 @@
     <ClInclude Include="HttpHelper.hpp" />
     <ClInclude Include="InsetWindow.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="NetConf.h" />
+    <ClInclude Include="NetConf_default.h" />
     <ClInclude Include="rapidjson\document.h" />
     <ClInclude Include="rapidjson\filestream.h" />
     <ClInclude Include="rapidjson\prettywriter.h" />

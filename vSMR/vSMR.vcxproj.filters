@@ -119,6 +119,12 @@
     <ClInclude Include="VegaIcons.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NetConf_default.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NetConf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="vSMR.def">
