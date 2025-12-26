@@ -19,8 +19,6 @@ WNDPROC gSourceProc;
 HWND pluginWindow;
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-map<string, string> CSMRRadar::vStripsStands;
-
 map<int, CInsetWindow *> appWindows;
 
 inline double closest(std::vector<double> const& vec, double value) {

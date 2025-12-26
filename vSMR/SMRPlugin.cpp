@@ -10,10 +10,6 @@ clock_t timer;
 
 string myfrequency;
 
-map<string, string> vStrips_Stands;
-
-bool startThreadvStrips = true;
-
 using namespace SMRPluginSharedData;
 char recv_buf[1024];
 
@@ -39,13 +35,9 @@ CSMRPlugin::CSMRPlugin(void) :CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE, MY_PL
 
 CSMRPlugin::~CSMRPlugin() {
 	// NOTE: 'SaveDataToSettings()' doesn't actually write data anywhere in a file, contrary to what the name freaking suggests.
-	try
-	{
+	try {
 		io_service.stop();
-		//vStripsThread.join();
-	}
-	catch (std::exception& e)
-	{
+	} catch (std::exception& e) {
 		std::cerr << e.what() << std::endl;
 	}
 }

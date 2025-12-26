@@ -48,8 +48,6 @@ public:
 	CSMRRadar();
 	virtual ~CSMRRadar();
 
-	static map<string, string> vStripsStands;
-
 	bool BLINK = false;
 
 	map<string, POINT> TagsOffsets;
