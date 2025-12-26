@@ -228,8 +228,7 @@ void CSMRRadar::LoadProfile(string profileName) {
 	this->LoadCustomFont();
 }
 
-void CSMRRadar::OnAsrContentLoaded(bool Loaded)
-{
+void CSMRRadar::OnAsrContentLoaded(bool Loaded) {
 	Logger::info(string(__FUNCSIG__));
 	const char * p_value;
 
@@ -314,8 +313,7 @@ void CSMRRadar::OnAsrContentLoaded(bool Loaded)
 	// ReSharper restore CppZeroConstantCanBeReplacedWithNullptr
 }
 
-void CSMRRadar::OnAsrContentToBeSaved()
-{
+void CSMRRadar::OnAsrContentToBeSaved() {
 	Logger::info(string(__FUNCSIG__));
 
 	SaveDataToAsr("Airport", "Active airport for RIMCAS", getActiveAirport().c_str());
@@ -523,15 +521,13 @@ void CSMRRadar::OnMoveScreenObject(int ObjectType, const char * sObjectId, POINT
 
 }
 
-void CSMRRadar::OnOverScreenObject(int ObjectType, const char * sObjectId, POINT Pt, RECT Area)
-{
+void CSMRRadar::OnOverScreenObject(int ObjectType, const char * sObjectId, POINT Pt, RECT Area) {
 	Logger::info(string(__FUNCSIG__));
 	mouseLocation = Pt;
 	RequestRefresh();
 }
 
-void CSMRRadar::OnClickScreenObject(int ObjectType, const char * sObjectId, POINT Pt, RECT Area, int Button)
-{
+void CSMRRadar::OnClickScreenObject(int ObjectType, const char * sObjectId, POINT Pt, RECT Area, int Button) {
 	Logger::info(string(__FUNCSIG__));
 	mouseLocation = Pt;
 
@@ -1087,8 +1083,7 @@ void CSMRRadar::RefreshAirportActivity(void) {
 	}
 }
 
-void CSMRRadar::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget)
-{
+void CSMRRadar::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	Logger::info(string(__FUNCSIG__));
 	if (!RadarTarget.IsValid() || !RadarTarget.GetPosition().IsValid())
 		return;
@@ -1281,8 +1276,7 @@ bool CSMRRadar::OnCompileCommand(const char * sCommandLine) {
 	return false;
 }
 
-map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, bool isAcCorrelated, bool isProMode, int TransitionAltitude, bool useSpeedForGates, string ActiveAirport)
-{
+map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, bool isAcCorrelated, bool isProMode, int TransitionAltitude, bool useSpeedForGates, string ActiveAirport) {
 	Logger::info(string(__FUNCSIG__));
 	// ----
 	// Tag items available
@@ -1547,8 +1541,7 @@ map<string, string> CSMRRadar::GenerateTagData(CRadarTarget rt, CFlightPlan fp, 
 	return TagReplacingMap;
 }
 
-void CSMRRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
-{
+void CSMRRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan) {
 	Logger::info(string(__FUNCSIG__));
 	string callsign = string(FlightPlan.GetCallsign());
 
@@ -1558,8 +1551,7 @@ void CSMRRadar::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 	}
 }
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg)
 	{
 	case WM_SETCURSOR:
@@ -2904,12 +2896,10 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 
 //---EuroScopePlugInExitCustom-----------------------------------------------
 
-void CSMRRadar::EuroScopePlugInExitCustom()
-{
+void CSMRRadar::EuroScopePlugInExitCustom() {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState())
 
-		if (smrCursor != nullptr && smrCursor != NULL)
-		{
-			SetWindowLong(pluginWindow, GWL_WNDPROC, (LONG)gSourceProc);
-		}
+	if (smrCursor != nullptr && smrCursor != NULL) {
+		SetWindowLong(pluginWindow, GWL_WNDPROC, (LONG)gSourceProc);
+	}
 }
