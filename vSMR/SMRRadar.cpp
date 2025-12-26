@@ -114,8 +114,7 @@ CSMRRadar::CSMRRadar() {
 	this->CSMRRadar::LoadCustomFont();
 }
 
-CSMRRadar::~CSMRRadar()
-{
+CSMRRadar::~CSMRRadar() {
 	Logger::info(string(__FUNCSIG__));
 	try {
 		this->OnAsrContentToBeSaved();

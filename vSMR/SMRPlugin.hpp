@@ -19,9 +19,7 @@
 using namespace std;
 using namespace EuroScopePlugIn;
 
-class CSMRPlugin :
-	public EuroScopePlugIn::CPlugIn
-{
+class CSMRPlugin : public EuroScopePlugIn::CPlugIn {
 public:
 	CSMRPlugin();
 	virtual ~CSMRPlugin();
