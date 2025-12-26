@@ -114,8 +114,6 @@ CSMRRadar::CSMRRadar() {
 	this->CSMRRadar::LoadProfile("Default");
 
 	this->CSMRRadar::LoadCustomFont();
-
-	this->CSMRRadar::RefreshAirportActivity();
 }
 
 CSMRRadar::~CSMRRadar()
@@ -1062,27 +1060,6 @@ void CSMRRadar::OnFunctionCall(int FunctionId, const char * sItemString, POINT P
 	}
 }
 
-void CSMRRadar::RefreshAirportActivity(void) {
-	Logger::info(string(__FUNCSIG__));
-	//
-	// Getting the depatures and arrivals airports
-	//
-
-	Active_Arrivals.clear();
-	CSectorElement airport;
-	for (airport = GetPlugIn()->SectorFileElementSelectFirst(SECTOR_ELEMENT_AIRPORT);
-		airport.IsValid();
-		airport = GetPlugIn()->SectorFileElementSelectNext(airport, SECTOR_ELEMENT_AIRPORT))
-	{
-		if (airport.IsElementActive(false)) {
-			string s = airport.GetName();
-			s = s.substr(0, 4);
-			transform(s.begin(), s.end(), s.begin(), ::toupper);
-			Active_Arrivals.push_back(s);
-		}
-	}
-}
-
 void CSMRRadar::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
 	Logger::info(string(__FUNCSIG__));
 	if (!RadarTarget.IsValid() || !RadarTarget.GetPosition().IsValid())
@@ -1632,7 +1609,6 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 	if (delta_t >= 1) {
 		clock_init = clock();
 		BLINK = !BLINK;
-		RefreshAirportActivity();
 	}
 
 	if (!QDMenabled && !QDMSelectEnabled) {

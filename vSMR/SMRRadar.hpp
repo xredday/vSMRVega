@@ -54,8 +54,6 @@ public:
 
 	map<string, POINT> TagsOffsets;
 
-	vector<string> Active_Arrivals;
-
 	clock_t clock_init, clock_final;
 
 	COLORREF SMR_TARGET_COLOR = RGB(255, 242, 73);
@@ -252,10 +250,6 @@ public:
 	//---OnCompileCommand-----------------------------------------
 
 	virtual bool OnCompileCommand(const char * sCommandLine);
-
-	//---RefreshAirportActivity---------------------------------------------
-
-	virtual void RefreshAirportActivity(void);
 
 	//---OnRadarTargetPositionUpdate---------------------------------------------
 
