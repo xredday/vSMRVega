@@ -328,6 +328,8 @@ const int APPWINDOW_BASE = 8887;
 const int APPWINDOW_ONE = 8888;
 const int APPWINDOW_TWO = 8889;
 
+const int WARNING_WINDOW = 9000;
+
 // Brightness update
 const int RIMCAS_BRIGHTNESS_LABEL = 301;
 const int RIMCAS_BRIGHTNESS_SYMBOL = 302;

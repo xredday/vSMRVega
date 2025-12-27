@@ -91,6 +91,8 @@ public:
 	map<string, double> TagAngles;
 	map<string, int> TagLeaderLineLength;
 
+    Point warningWindowPos = Point(100, 100);
+
 	bool QDMenabled = false;
 	bool QDMSelectEnabled = false;
 	POINT QDMSelectPt;

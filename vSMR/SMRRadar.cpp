@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Resource.h"
 #include "SMRRadar.hpp"
 
@@ -249,6 +249,12 @@ void CSMRRadar::OnAsrContentLoaded(bool Loaded) {
 	if ((p_value = GetDataFromAsr("PredictedLine")) != NULL)
 		PredictedLength = atoi(p_value);
 
+	if ((p_value = GetDataFromAsr("WarningPosX")) != NULL)
+        warningWindowPos.X = atoi(p_value);
+
+    if ((p_value = GetDataFromAsr("WarningPosY")) != NULL)
+        warningWindowPos.Y = atoi(p_value);
+
 	string temp;
 
 	for (int i = 1; i < 3; i++)
@@ -324,6 +330,9 @@ void CSMRRadar::OnAsrContentToBeSaved() {
 	SaveDataToAsr("GndTrailsDots", "vSMR GRND Trail Dots", std::to_string(Trail_Gnd).c_str());
 
 	SaveDataToAsr("PredictedLine", "vSMR Predicted Track Lines", std::to_string(PredictedLength).c_str());
+
+    SaveDataToAsr("WarningPosX", "vSMR Vega Warning Window Position", std::to_string(warningWindowPos.X).c_str());
+    SaveDataToAsr("WarningPosY", "vSMR Vega Warning Window Position", std::to_string(warningWindowPos.Y).c_str());
 
 	string temp = "";
 
@@ -509,6 +518,10 @@ void CSMRRadar::OnMoveScreenObject(int ObjectType, const char * sObjectId, POINT
 				standardCursor = true;
 			}
 		}
+	}
+
+	if (ObjectType == WARNING_WINDOW) {
+        warningWindowPos = Point(Area.left, Area.top);
 	}
 
 	mouseLocation = Pt;
@@ -1572,6 +1585,50 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 			RadarArea.bottom = GetChatArea().bottom;
 
 			graphics.FillRectangle(&AlphaBrush, CopyRect(CRect(RadarArea)));
+
+			graphics.ReleaseHDC(hDC);
+		}
+
+		vector<pair<int, wstring>> warningMessages;
+        warningMessages.push_back(make_pair(0, L"Измените конфигурацию ВПП! Взлёт: 24L, 24C. Посадка: 24L"));
+
+		if (warningMessages.size() > 0) {
+			Graphics graphics(hDC);
+			graphics.SetPageUnit(Gdiplus::UnitPixel);
+			graphics.SetSmoothingMode(SmoothingModeHighQuality);
+
+			int minwidth = 500;
+            int textwidth = 0;
+			Gdiplus::Font *font = customFonts[currentFontSize + 10];
+			for (auto &msg : warningMessages) {
+				RectF measureRect;
+				graphics.MeasureString(msg.second.c_str(), wcslen(msg.second.c_str()), font, PointF(0, 0), &Gdiplus::StringFormat(), &measureRect);
+                textwidth = max(textwidth, (int) measureRect.Width);
+            }
+            int width = max(minwidth, textwidth + 20);
+            
+			int fontplusoffset = font->GetSize() + 4;
+			int ho = 3;
+			int height = fontplusoffset * ((int) warningMessages.size() + 1);
+
+            graphics.FillRectangle(&SolidBrush(Color(0, 0, 0)), warningWindowPos.X, warningWindowPos.Y, width, height);
+            graphics.FillRectangle(&SolidBrush(Color(0, 0, 255)), warningWindowPos.X, warningWindowPos.Y, width, fontplusoffset);
+            AddScreenObject(WARNING_WINDOW, "vSMR Vega Warning Window", CRect(warningWindowPos.X, warningWindowPos.Y, warningWindowPos.X + width, warningWindowPos.Y + fontplusoffset), true, "");
+            
+            RectF measureRect;
+			graphics.MeasureString(L"ВНИМАНИЕ", wcslen(L"ВНИМАНИЕ"), font, PointF(0, 0), &Gdiplus::StringFormat(), &measureRect);
+            int centerX = warningWindowPos.X + (width / 2) - ((int) measureRect.Width / 2);
+            graphics.DrawString(L"ВНИМАНИЕ", -1, font, PointF(centerX, warningWindowPos.Y + ho), &SolidBrush(Color(255, 255, 255)));
+
+			int yoffset = warningWindowPos.Y + fontplusoffset;
+			for (auto &msg : warningMessages) {
+				RectF msgRect;
+				graphics.MeasureString(msg.second.c_str(), wcslen(msg.second.c_str()), font, PointF(0, 0), &Gdiplus::StringFormat(), &msgRect);
+				int msgCenterX = warningWindowPos.X + (width / 2) - ((int) msgRect.Width / 2);
+				graphics.DrawString(msg.second.c_str(), -1, font, PointF(msgCenterX, yoffset + ho), &SolidBrush(msg.first == 0 ? Color(255, 90, 90) : Color(190, 255, 190)));
+                if (yoffset != warningWindowPos.Y + fontplusoffset) graphics.DrawLine(&Pen(Color(25, 25, 25)), warningWindowPos.X, yoffset, warningWindowPos.X + width, yoffset);
+                yoffset += fontplusoffset;
+            }
 
 			graphics.ReleaseHDC(hDC);
 		}
