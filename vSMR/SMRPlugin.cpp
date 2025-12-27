@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "SMRPlugin.hpp"
+#include "curl/curl.h"
 #include "NetConf.h"
 
 bool Logger::ENABLED;
