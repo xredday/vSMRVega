@@ -7,6 +7,7 @@
 #include "Mmsystem.h"
 #include <chrono>
 #include <thread>
+#include <mutex>
 #include "SMRRadar.hpp"
 #include "Logger.h"
 
@@ -47,5 +48,18 @@ public:
 	//---OnRadarScreenCreated------------------------------------------
 
 	virtual CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
+
+	map<string, map<string, int>> getRunwayConfigurations() {
+		lock_guard<mutex> lock(runwayConfigMutex);
+		return RunwayConfigurations;
+    }
+
+private:
+    map<string, map<string, int>> RunwayConfigurations;
+    mutex runwayConfigMutex;
+
+	string makeCURLGetRequest(string endpoint);
+	vector<string> splitString(string s, string delim);
+    void updateRunwayConfigurations();
 };
 

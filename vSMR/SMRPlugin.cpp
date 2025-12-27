@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "SMRPlugin.hpp"
+#include "NetConf.h"
 
 bool Logger::ENABLED;
 string Logger::DLL_PATH;
@@ -19,6 +20,8 @@ CSMRPlugin::CSMRPlugin(void) :CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE, MY_PL
 	Logger::DLL_PATH = "";
 	Logger::ENABLED = false;
 
+    curl_global_init(CURL_GLOBAL_ALL);
+
 	//
 	// Adding the SMR Display type
 	//
@@ -31,6 +34,9 @@ CSMRPlugin::CSMRPlugin(void) :CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE, MY_PL
 	DllPath = DllPathFile;
 	DllPath.resize(DllPath.size() - strlen("vSMR.dll"));
 	Logger::DLL_PATH = DllPath;
+
+	thread urc{&CSMRPlugin::updateRunwayConfigurations, this};
+	urc.detach();
 }
 
 CSMRPlugin::~CSMRPlugin() {
@@ -40,6 +46,7 @@ CSMRPlugin::~CSMRPlugin() {
 	} catch (std::exception& e) {
 		std::cerr << e.what() << std::endl;
 	}
+    curl_global_cleanup();
 }
 
 bool CSMRPlugin::OnCompileCommand(const char * sCommandLine) {
@@ -66,10 +73,14 @@ void CSMRPlugin::OnFlightPlanDisconnect(CFlightPlan FlightPlan)
 		ManuallyCorrelated.erase(std::find(ManuallyCorrelated.begin(), ManuallyCorrelated.end(), rt.GetSystemID()));
 }
 
-void CSMRPlugin::OnTimer(int Counter)
-{
+void CSMRPlugin::OnTimer(int Counter) {
 	Logger::info(string(__FUNCSIG__));
 	BLINK = !BLINK;
+
+	if (Counter % 60 == 0) {
+		thread urc{&CSMRPlugin::updateRunwayConfigurations, this};
+		urc.detach();
+	}
 };
 
 CRadarScreen * CSMRPlugin::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
@@ -82,6 +93,65 @@ CRadarScreen * CSMRPlugin::OnRadarScreenCreated(const char * sDisplayName, bool 
 	}
 
 	return NULL;
+}
+
+static size_t WriteCurlCallback(void *contents, size_t size, size_t nmemb, void *userp) {
+	((string *) userp)->append((char *) contents, size * nmemb);
+	return size * nmemb;
+}
+
+string CSMRPlugin::makeCURLGetRequest(string endpoint) {
+	CURL *curl = curl_easy_init();
+	string readBuffer;
+	if (curl == NULL) throw runtime_error("Failed to load CURL!");
+	curl_easy_setopt(curl, CURLOPT_URL, string{RWYAPI_SERVER_URL + endpoint}.c_str());
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCurlCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+	CURLcode res = curl_easy_perform(curl);
+	long httpCode = 0;
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+	curl_easy_cleanup(curl);
+	if (res != CURLE_OK)
+		throw runtime_error(curl_easy_strerror(res));
+	else if (httpCode != 200)
+		throw domain_error(string{"HTTP error code: " + to_string(httpCode)});
+	else
+		return readBuffer;
+}
+
+vector<string> CSMRPlugin::splitString(string s, string delim) {
+	size_t last = 0;
+	size_t next = 0;
+	vector<string> result;
+
+	while ((next = s.find(delim, last)) != string::npos) {
+		result.push_back(s.substr(last, next - last));
+		last = next + delim.length();
+	}
+	result.push_back(s.substr(last));
+	return result;
+}
+
+void CSMRPlugin::updateRunwayConfigurations() {
+	try {
+		string response = makeCURLGetRequest("get.php");
+        vector<string> lines = splitString(response, "\n");
+        map<string, map<string, int>> newRunwayConfigurations;
+		for (string line : lines) {
+			vector<string> parts = splitString(line, ",");
+			if (parts.size() != 3) continue;
+			newRunwayConfigurations[parts[0]][parts[1]] = stoi(parts[2]);
+		}
+		lock_guard<mutex> lock(runwayConfigMutex);
+		RunwayConfigurations = newRunwayConfigurations;
+	} catch (runtime_error &e) {
+		Logger::info(string{"Failed to update runway configurations: "} + e.what());
+	} catch (domain_error &e) {
+		Logger::info(string{"Failed to update runway configurations: "} + e.what());
+	}
 }
 
 //---EuroScopePlugInExit-----------------------------------------------
