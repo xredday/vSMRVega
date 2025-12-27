@@ -111,7 +111,7 @@ bool CSMRPlugin::isRunwayMatch(string airport) {
 		if (config == 0 && (active.first || active.second)) return false;
         if (config == 1 && (!active.first || active.second)) return false;
         if (config == 2 && (active.first || !active.second)) return false;
-        if (config == 3 && !active.first && !active.second) return false;
+		if (config == 3 && (!active.first || !active.second)) return false;
     }
 	for (auto const& [rwy, active] : airportActiveRunways) {
 		if (serverConfig.count(rwy) == 0 && (active.first || active.second)) return false;
