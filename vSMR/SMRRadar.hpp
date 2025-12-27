@@ -21,6 +21,7 @@
 #include "Logger.h"
 #include <filesystem>
 #include <iostream>
+#include "SMRPlugin.hpp"
 
 using namespace std;
 using namespace Gdiplus;
@@ -41,11 +42,13 @@ namespace SMRPluginSharedData
 
 using namespace SMRSharedData;
 
+class CSMRPlugin;
+
 class CSMRRadar :
 	public EuroScopePlugIn::CRadarScreen
 {
 public:
-	CSMRRadar();
+	CSMRRadar(CSMRPlugin* plugin);
 	virtual ~CSMRRadar();
 
 	bool BLINK = false;
@@ -356,4 +359,7 @@ public:
 		//delete CurrentConfig;
 		delete this;
 	};
+
+private:
+    CSMRPlugin *plugin;
 };

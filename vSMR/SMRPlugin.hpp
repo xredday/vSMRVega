@@ -8,6 +8,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <atomic>
 #include "SMRRadar.hpp"
 #include "Logger.h"
 
@@ -45,18 +46,21 @@ public:
 
 	virtual void OnTimer(int Counter);
 
+	virtual void OnAirportRunwayActivityChanged();
+
 	//---OnRadarScreenCreated------------------------------------------
 
 	virtual CRadarScreen * OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated);
 
-	map<string, map<string, int>> getRunwayConfigurations() {
-		lock_guard<mutex> lock(runwayConfigMutex);
-		return RunwayConfigurations;
-    }
+    bool getWasLastRunwayConfigUpdateSuccessful() { return wasLastRunwayConfigUpdateSuccessful; }
+    pair<string, string> getNeededRunwayConfiguration(string airport);
+	bool isRunwayMatch(string airport);
 
 private:
+    map<string, map<string, pair<bool, bool>>> activeRunways;
     map<string, map<string, int>> RunwayConfigurations;
     mutex runwayConfigMutex;
+	atomic<bool> wasLastRunwayConfigUpdateSuccessful = true;
 
 	string makeCURLGetRequest(string endpoint);
 	vector<string> splitString(string s, string delim);

@@ -38,6 +38,7 @@ CSMRPlugin::CSMRPlugin(void) :CPlugIn(EuroScopePlugIn::COMPATIBILITY_CODE, MY_PL
 
 	thread urc{&CSMRPlugin::updateRunwayConfigurations, this};
 	urc.detach();
+    OnAirportRunwayActivityChanged();
 }
 
 CSMRPlugin::~CSMRPlugin() {
@@ -78,17 +79,69 @@ void CSMRPlugin::OnTimer(int Counter) {
 	Logger::info(string(__FUNCSIG__));
 	BLINK = !BLINK;
 
-	if (Counter % 60 == 0) {
+	if (Counter % 30 == 0) {
 		thread urc{&CSMRPlugin::updateRunwayConfigurations, this};
 		urc.detach();
 	}
 };
 
+void CSMRPlugin::OnAirportRunwayActivityChanged() {
+	Logger::info(string(__FUNCSIG__));
+	for (CSectorElement e = SectorFileElementSelectFirst(SECTOR_ELEMENT_RUNWAY); e.IsValid(); e = SectorFileElementSelectNext(e, SECTOR_ELEMENT_RUNWAY)) {
+		string ap = string{e.GetAirportName()}.substr(0, 4);
+		string rwy1 = e.GetRunwayName(0);
+		if (e.IsElementActive(true, 0) || e.IsElementActive(false, 0)) activeRunways[ap][rwy1] = make_pair(e.IsElementActive(true, 0), e.IsElementActive(false, 0));
+		else activeRunways[ap].erase(rwy1);
+		string rwy2 = e.GetRunwayName(1);
+		if (e.IsElementActive(true, 1) || e.IsElementActive(false, 1)) activeRunways[ap][rwy2] = make_pair(e.IsElementActive(true, 1), e.IsElementActive(false, 1));
+		else activeRunways[ap].erase(rwy2);
+		if (activeRunways[ap].empty()) activeRunways.erase(ap);
+	}
+}
+
+bool CSMRPlugin::isRunwayMatch(string airport) {
+	lock_guard<mutex> lock(runwayConfigMutex);
+	if (RunwayConfigurations.find(airport) == RunwayConfigurations.end()) return true;
+    map<string, int> serverConfig = RunwayConfigurations[airport];
+    map<string, pair<bool, bool>> airportActiveRunways = activeRunways[airport];
+	for (auto const& [rwy, config] : serverConfig) {
+        if (config != 0 && airportActiveRunways.count(rwy) == 0) return false;
+        if (config == 0 && airportActiveRunways.count(rwy) == 0) continue;
+        pair<bool, bool> active = airportActiveRunways[rwy];
+		if (config == 0 && (active.first || active.second)) return false;
+        if (config == 1 && (!active.first || active.second)) return false;
+        if (config == 2 && (active.first || !active.second)) return false;
+        if (config == 3 && !active.first && !active.second) return false;
+    }
+	for (auto const& [rwy, active] : airportActiveRunways) {
+		if (serverConfig.count(rwy) == 0 && (active.first || active.second)) return false;
+    }
+	return true;
+}
+
+pair<string, string> CSMRPlugin::getNeededRunwayConfiguration(string airport) {
+	lock_guard<mutex> lock(runwayConfigMutex);
+	if (RunwayConfigurations.find(airport) == RunwayConfigurations.end()) return make_pair("?", "?");
+	map<string, int> serverConfig = RunwayConfigurations[airport];
+	string dep, arr;
+	for (auto const& [rwy, config] : serverConfig) {
+		if (config == 1 || config == 3) {
+            if (dep.length() > 0) dep += ", ";
+            dep += rwy;
+		}
+		if (config == 2 || config == 3) {
+            if (arr.length() > 0) arr += ", ";
+            arr += rwy;
+		}
+	}
+	return make_pair(dep, arr);
+}
+
 CRadarScreen * CSMRPlugin::OnRadarScreenCreated(const char * sDisplayName, bool NeedRadarContent, bool GeoReferenced, bool CanBeSaved, bool CanBeCreated)
 {
 	Logger::info(string(__FUNCSIG__));
 	if (!strcmp(sDisplayName, MY_PLUGIN_VIEW_AVISO)) {
-		CSMRRadar* rd = new CSMRRadar();
+		CSMRRadar* rd = new CSMRRadar(this);
 		RadarScreensOpened.push_back(rd);
 		return rd;
 	}
@@ -148,10 +201,13 @@ void CSMRPlugin::updateRunwayConfigurations() {
 		}
 		lock_guard<mutex> lock(runwayConfigMutex);
 		RunwayConfigurations = newRunwayConfigurations;
+        wasLastRunwayConfigUpdateSuccessful = true;
 	} catch (runtime_error &e) {
 		Logger::info(string{"Failed to update runway configurations: "} + e.what());
+        wasLastRunwayConfigUpdateSuccessful = false;
 	} catch (domain_error &e) {
 		Logger::info(string{"Failed to update runway configurations: "} + e.what());
+        wasLastRunwayConfigUpdateSuccessful = false;
 	}
 }
 

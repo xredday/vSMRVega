@@ -39,8 +39,9 @@ bool mouseWithin(CRect rect) {
 
 // ReSharper disable CppMsExtAddressOfClassRValue
 
-CSMRRadar::CSMRRadar() {
+CSMRRadar::CSMRRadar(CSMRPlugin *plugin) {
 	Logger::info("CSMRRadar::CSMRRadar()");
+	this->plugin = plugin;
 
 	// Initializing randomizer
 	srand(static_cast<unsigned>(time(nullptr)));
@@ -1549,6 +1550,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 	}
 }
 
+wstring to_wide(const string &multi) {
+	wstring wide; wchar_t w; mbstate_t mb{};
+	size_t n = 0, len = multi.length() + 1;
+	while (auto res = mbrtowc(&w, multi.c_str() + n, len - n, &mb)) {
+		if (res == size_t(-1) || res == size_t(-2))
+			throw "invalid encoding";
+
+		n += res;
+		wide += w;
+	}
+	return wide;
+}
+
 void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 	Logger::info(string(__FUNCSIG__));
 	// Changing the mouse cursor
@@ -1590,7 +1604,11 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 		}
 
 		vector<pair<int, wstring>> warningMessages;
-        warningMessages.push_back(make_pair(0, L"Измените конфигурацию ВПП! Взлёт: 24L, 24C. Посадка: 24L"));
+        if (!plugin->isRunwayMatch(ActiveAirport)) {
+            pair<string, string> rw = plugin->getNeededRunwayConfiguration(ActiveAirport);
+			warningMessages.push_back(make_pair(0, L"Измените конфигурацию ВПП! Вылет: " + to_wide(rw.first) + L". Прибытие: " + to_wide(rw.second) + L"."));
+		}
+        if (!plugin->getWasLastRunwayConfigUpdateSuccessful()) warningMessages.push_back(make_pair(1, L"Отсутствует связь с сервером синхронизации ВПП!"));
 
 		if (warningMessages.size() > 0) {
 			Graphics graphics(hDC);
