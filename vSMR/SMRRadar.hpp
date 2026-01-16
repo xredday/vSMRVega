@@ -82,6 +82,7 @@ public:
 	string DllPath;
 	string ConfigPath;
 	string IconsPath;
+	string PolygonsPath;
 	CCallsignLookup * Callsigns = nullptr;
 	CColorManager * ColorManager;
 
@@ -110,6 +111,21 @@ public:
 	map<int, string> TimePopupData;
 	multimap<string, string> AcOnRunway;
 	map<string, bool> ColorAC;
+
+	struct Geo {
+		double lat;
+		double lon;
+	};
+
+	struct AerodromeStructure {
+        map<int, pair<string, vector<Geo>>> runways;
+		map<string, vector<Geo>> stops;
+        map<string, vector<Geo>> taxiways;
+	};
+
+	bool runwayDebug = false;
+    bool stopsDebug = false;
+    bool taxiwaysDebug = false;
 
 	map<string, CRimcas::RunwayAreaType> RunwayAreas;
 
@@ -148,6 +164,7 @@ public:
 	enum TagTypes { Departure, Arrival, Airborne, Uncorrelated };
 
 	string ActiveAirport = "UUEE";
+	AerodromeStructure ActiveAerodromeStructure;
 
 	inline string getActiveAirport() {
 		return ActiveAirport;
@@ -362,4 +379,7 @@ public:
 
 private:
     CSMRPlugin *plugin;
+    void loadAerodromeStructure(string icao);
+	vector<Point> reconv(vector<Geo> points);
+    PointF getPolygonCenter(const vector<Point> &points, int subY = 0);
 };
