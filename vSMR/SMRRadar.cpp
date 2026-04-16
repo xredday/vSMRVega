@@ -57,7 +57,6 @@ CSMRRadar::CSMRRadar(CSMRPlugin *plugin) {
 	
 	ConfigPath = DllPath + "\\vSMR_Profiles.json";
     IconsPath = DllPath + "\\vSMRVega_Icons.json";
-    PolygonsPath = DllPath + "\\vSMRVega_Polygons.json";
 
 	Logger::info("Loading callsigns");
 
@@ -225,96 +224,13 @@ void CSMRRadar::LoadProfile(string profileName) {
 	this->LoadCustomFont();
 }
 
-void CSMRRadar::loadAerodromeStructure(string icao) {
-	Logger::info(string(__FUNCSIG__));
-	stringstream ss;
-	ifstream ifs;
-	ifs.open(PolygonsPath.c_str(), std::ios::binary);
-	ss << ifs.rdbuf();
-	ifs.close();
-    rapidjson::Document document;
-	if (document.Parse<0>(ss.str().c_str()).HasParseError()) {
-		AfxMessageBox("An error parsing vSMR aerodrome structure occurred.\nOnce fixed, reload the config by typing '.smr reload'", MB_OK);
-
-		ASSERT(AfxGetMainWnd() != NULL);
-		AfxGetMainWnd()->SendMessage(WM_CLOSE);
-	}
-	AerodromeStructure st;
-	if (!document.HasMember(icao.c_str())) {
-		GetPlugIn()->DisplayUserMessage("vSMR Vega", "vSMR Vega", "Aerodrome structure not found", true, true, false, false, false);
-        ActiveAerodromeStructure = st;
-		return;
-	}
-	Value &a = document[icao.c_str()];
-	if (a.HasMember("runways")) {
-		map<int, pair<string, vector<Geo>>> rwx;
-		Value &runways = a["runways"];
-		for (int i = 1; true; i++) {
-            if (!runways.HasMember(std::to_string(i).c_str())) break;
-            Value &rw = runways[std::to_string(i).c_str()];
-            string name = rw["name"].GetString();
-            vector<Geo> points;
-            Value &polygon = rw["polygon"];
-			for (SizeType p = 0; p < polygon.Size(); p++) {
-				Geo g;
-				g.lat = polygon[p][0].GetDouble();
-				g.lon = polygon[p][1].GetDouble();
-				points.push_back(g);
-            }
-			rwx[i] = make_pair(name, points);
-		}
-		st.runways = rwx;
-    }
-	#define GO GetObject
-	#undef GetObject
-	if (a.HasMember("stops")) {
-		map<string, vector<Geo>> stp;
-        Value &stops = a["stops"];
-		for (auto &stop : stops.GetObject()) {
-			vector<Geo> points;
-			Value &polygon = stop.value;
-			for (SizeType p = 0; p < polygon.Size(); p++) {
-				Geo g;
-				g.lat = polygon[p][0].GetDouble();
-				g.lon = polygon[p][1].GetDouble();
-				points.push_back(g);
-			}
-			stp[stop.name.GetString()] = points;
-        }
-        st.stops = stp;
-	}
-	if (a.HasMember("taxiways")) {
-		map<string, vector<Geo>> tx;
-		Value &taxiways = a["taxiways"];
-		for (auto &taxiway : taxiways.GetObject()) {
-			vector<Geo> points;
-			Value &polygon = taxiway.value;
-			for (SizeType p = 0; p < polygon.Size(); p++) {
-				Geo g;
-				g.lat = polygon[p][0].GetDouble();
-				g.lon = polygon[p][1].GetDouble();
-				points.push_back(g);
-			}
-			tx[taxiway.name.GetString()] = points;
-        }
-		st.taxiways = tx;
-    }
-	#define GetObject GO
-	#undef GO
-	ActiveAerodromeStructure = st;
-    string i = "Reloaded configuration. Runways: " + to_string(st.runways.size()) + ", Stops: " + to_string(st.stops.size()) + ", Taxiways: " + to_string(st.taxiways.size());
-	GetPlugIn()->DisplayUserMessage("vSMR Vega", "vSMR Vega", i.c_str(), true, true, false, false, false);
-}
-
 void CSMRRadar::OnAsrContentLoaded(bool Loaded) {
 	Logger::info(string(__FUNCSIG__));
 	const char * p_value;
 
 	// ReSharper disable CppZeroConstantCanBeReplacedWithNullptr
-	if ((p_value = GetDataFromAsr("Airport")) != NULL) {
+	if ((p_value = GetDataFromAsr("Airport")) != NULL)
 		setActiveAirport(p_value);
-        loadAerodromeStructure(p_value);
-	}
 
 	if ((p_value = GetDataFromAsr("ActiveProfile")) != NULL)
 		this->LoadProfile(string(p_value));
@@ -766,16 +682,6 @@ void CSMRRadar::OnClickScreenObject(int ObjectType, const char * sObjectId, POIN
 			GetPlugIn()->AddPopupListElement("Close", "", RIMCAS_CLOSE, false, 2, false, true);
 		}
 
-		if (strcmp(sObjectId, "DebugMenu") == 0) {
-			Area.top = Area.top + 30;
-			Area.bottom = Area.bottom + 30;
-			GetPlugIn()->OpenPopupList(Area, "Debug", 1);
-			GetPlugIn()->AddPopupListElement("Runways", "", DEBUG_TOGGLE_RUNWAYS, false, int(runwayDebug));
-			GetPlugIn()->AddPopupListElement("Stops", "", DEBUG_TOGGLE_STOPS, false, int(stopsDebug));
-			GetPlugIn()->AddPopupListElement("Taxiways", "", DEBUG_TOGGLE_TAXIWAYS, false, int(taxiwaysDebug));
-			GetPlugIn()->AddPopupListElement("Close", "", RIMCAS_CLOSE, false, 2, false, true);
-        }
-
 		if (strcmp(sObjectId, "/") == 0)
 		{
 			if (Button == BUTTON_LEFT)
@@ -989,7 +895,6 @@ void CSMRRadar::OnFunctionCall(int FunctionId, const char * sItemString, POINT P
 	if (FunctionId == RIMCAS_ACTIVE_AIRPORT_FUNC) {
 		setActiveAirport(sItemString);
 		SaveDataToAsr("Airport", "Active airport", getActiveAirport().c_str());
-        loadAerodromeStructure(sItemString);
 	}
 
 	if (FunctionId == RIMCAS_UPDATE_FONTS) {
@@ -1164,16 +1069,6 @@ void CSMRRadar::OnFunctionCall(int FunctionId, const char * sItemString, POINT P
 
 		CorrelateCursor();
 	}
-
-	if (FunctionId == DEBUG_TOGGLE_RUNWAYS) {
-		runwayDebug = !runwayDebug;
-    }
-	if (FunctionId == DEBUG_TOGGLE_STOPS) {
-		stopsDebug = !stopsDebug;
-	}
-	if (FunctionId == DEBUG_TOGGLE_TAXIWAYS) {
-		taxiwaysDebug = !taxiwaysDebug;
-    }
 }
 
 void CSMRRadar::OnRadarTargetPositionUpdate(CRadarTarget RadarTarget) {
@@ -1362,7 +1257,6 @@ bool CSMRRadar::OnCompileCommand(const char * sCommandLine) {
 		CurrentConfig = new CConfig(ConfigPath);
         Icons = new VegaIcons(IconsPath);
 		LoadProfile(CurrentConfig->getActiveProfileName());
-        loadAerodromeStructure(getActiveAirport());
         GetPlugIn()->DisplayUserMessage("vSMR Vega", "vSMR Vega", "Reloaded configuration", true, true, false, false, false);
 		return true;
 	}
@@ -1669,28 +1563,6 @@ wstring to_wide(const string &multi) {
 	return wide;
 }
 
-vector<Point> CSMRRadar::reconv(vector<Geo> points) {
-	vector<Point> result;
-	for (auto &p : points) {
-		CPosition pe;
-        pe.m_Latitude = p.lat;
-        pe.m_Longitude = p.lon;
-		POINT px = ConvertCoordFromPositionToPixel(pe);
-        result.push_back(Point(px.x, px.y));
-	}
-	return result;
-}
-
-PointF CSMRRadar::getPolygonCenter(const vector<Point> &points, int subY) {
-	int sumX = 0;
-	int sumY = 0;
-	for (auto &p : points) {
-		sumX += p.X;
-		sumY += p.Y;
-	}
-	return PointF(sumX / points.size(), sumY / points.size() - subY);
-}
-
 void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 	Logger::info(string(__FUNCSIG__));
 	// Changing the mouse cursor
@@ -1827,6 +1699,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 	// Creating the gdi+ graphics
 	Graphics graphics(hDC);
 	graphics.SetPageUnit(Gdiplus::UnitPixel);
+
 	graphics.SetSmoothingMode(SmoothingModeAntiAlias);
 
 	RECT RadarArea = GetRadarArea();
@@ -1834,42 +1707,6 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 	RadarArea.bottom = ChatArea.top;
 
 	AirportPositions.clear();
-
-    Gdiplus::Font *font12 = customFonts[12];
-    int ycorr = (int) font12->GetSize() / 2;
-	if (runwayDebug) {
-		for (auto &rwy : ActiveAerodromeStructure.runways) {
-			vector<Geo> p = rwy.second.second;
-			vector<Point> px = reconv(p);
-            // generate random color based on runway id
-            Color color = Color(100 + (std::hash<int>()(rwy.first) % 155), 100 + (std::hash<int>()(rwy.first + 1) % 155), 100 + (std::hash<int>()(rwy.first + 2) % 155));
-			graphics.FillPolygon(&SolidBrush(color), px.data(), (int) px.size());
-			graphics.DrawPolygon(&Pen(Color(0, 0, 0), 1), px.data(), (int) px.size());
-			graphics.DrawString(wstring{L"ВПП-" + to_wstring(rwy.first)}.c_str(), -1, font12, getPolygonCenter(px, ycorr), &SolidBrush(Color(255, 255, 255)));
-		}
-	}
-	if (stopsDebug) {
-		for (auto &stp : ActiveAerodromeStructure.stops) {
-			vector<Geo> p = stp.second;
-			vector<Point> px = reconv(p);
-			// generate random color based on stop name
-            Color color = Color(100 + (std::hash<string>()(stp.first) % 155), 100 + (std::hash<string>()(stp.first + "a") % 155), 100 + (std::hash<string>()(stp.first + "b") % 155));
-			graphics.FillPolygon(&SolidBrush(color), px.data(), (int) px.size());
-			graphics.DrawPolygon(&Pen(Color(0, 0, 0), 1), px.data(), (int) px.size());
-			graphics.DrawString(wstring{L"СТОП-" + to_wide(stp.first)}.c_str(), -1, font12, getPolygonCenter(px, ycorr), &SolidBrush(Color(255, 255, 255)));
-        }
-	}
-	if (taxiwaysDebug) {
-		for (auto &twy : ActiveAerodromeStructure.taxiways) {
-			vector<Geo> p = twy.second;
-			vector<Point> px = reconv(p);
-            // generate random color based on taxiway string name
-            Color color = Color(100 + (std::hash<string>()(twy.first) % 155), 100 + (std::hash<string>()(twy.first + "a") % 155), 100 + (std::hash<string>()(twy.first + "b") % 155));
-			graphics.FillPolygon(&SolidBrush(color), px.data(), (int) px.size());
-			graphics.DrawPolygon(&Pen(Color(0, 0, 0), 1), px.data(), (int) px.size());
-			graphics.DrawString(to_wide(twy.first).c_str(), -1, font12, getPolygonCenter(px, ycorr), &SolidBrush(Color(255, 255, 255)));
-		}
-	}
 
 
 	CSectorElement apt;
@@ -2958,11 +2795,7 @@ void CSMRRadar::OnRefresh(HDC hDC, int Phase) {
 
 	offset += dc.GetTextExtent("Colours").cx + 10;
 	dc.TextOutA(ToolBarAreaTop.left + offset, ToolBarAreaTop.top + 4, "Alerts");
-	AddScreenObject(RIMCAS_MENU, "RIMCASMenu", { ToolBarAreaTop.left + offset, ToolBarAreaTop.top + 4, ToolBarAreaTop.left + offset + dc.GetTextExtent("Alerts").cx, ToolBarAreaTop.top + 4 + + dc.GetTextExtent("Alerts").cy }, false, "RIMCAS menu");
-
-    offset += dc.GetTextExtent("Debug").cx + 10;
-    dc.TextOutA(ToolBarAreaTop.left + offset, ToolBarAreaTop.top + 4, "Debug");
-    AddScreenObject(RIMCAS_MENU, "DebugMenu", {ToolBarAreaTop.left + offset, ToolBarAreaTop.top + 4, ToolBarAreaTop.left + offset + dc.GetTextExtent("Debug").cx, ToolBarAreaTop.top + 4 + + dc.GetTextExtent("Debug").cy}, false, "Debug menu");
+	AddScreenObject(RIMCAS_MENU, "RIMCASMenu", { ToolBarAreaTop.left + offset, ToolBarAreaTop.top + 4, ToolBarAreaTop.left + offset + dc.GetTextExtent("Alerts").cx, ToolBarAreaTop.top + 4 + +dc.GetTextExtent("Alerts").cy }, false, "RIMCAS menu");
 
 	offset += dc.GetTextExtent("Alerts").cx + 10;
 	dc.TextOutA(ToolBarAreaTop.left + offset, ToolBarAreaTop.top + 4, "/");
