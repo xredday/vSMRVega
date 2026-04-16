@@ -191,7 +191,7 @@ vector<string> CSMRPlugin::splitString(string s, string delim) {
 
 void CSMRPlugin::updateRunwayConfigurations() {
 	try {
-		string response = makeCURLGetRequest("get.php");
+		string response = makeCURLGetRequest("getSintezRunways.php");
         vector<string> lines = splitString(response, "\n");
         map<string, map<string, int>> newRunwayConfigurations;
 		for (string line : lines) {
