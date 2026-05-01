@@ -55,8 +55,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,3,2,0
- PRODUCTVERSION 2,3,2,0
+ FILEVERSION 2,4,0,0
+ PRODUCTVERSION 2,4,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -72,12 +72,12 @@ BEGIN
         BLOCK "040004b0"
         BEGIN
             VALUE "FileDescription", "vSMR Vega Plugin for EuroScope"
-            VALUE "FileVersion", "2.3.2"
+            VALUE "FileVersion", "2.4-dev"
             VALUE "InternalName", "vSMR.dll"
             VALUE "LegalCopyright", "GNU GENERAL PUBLIC LICENSE"
             VALUE "OriginalFilename", "vSMR.dll"
             VALUE "ProductName", "vSMR"
-            VALUE "ProductVersion", "2.3.2"
+            VALUE "ProductVersion", "2.4-dev"
         END
     END
     BLOCK "VarFileInfo"
